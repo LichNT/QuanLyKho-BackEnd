@@ -399,7 +399,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('huydondathang/{id}', 'DonDatHangController@huyDon');
     Route::put('chuyenhoadon/{id}', 'DonDatHangController@chuyenHoaDon');
 
-    Route::post('thanhtoanboxung', 'DonDatHangController@thanhToanBoXung');
+    Route::post('thanhtoanbosung', 'DonDatHangController@thanhToanBoSung');
     Route::get('shipper', 'System\UserController@getShipper');
     Route::get('doitrahang', 'DonDatHangController@getDonDoiTra');
     Route::get('tonkhodattruoc/{id}', 'DonDatHangController@getTonKhoDatTruoc');

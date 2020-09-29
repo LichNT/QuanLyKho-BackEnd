@@ -10,7 +10,7 @@ use App\NopTien;
 use App\PhieuNhapKho;
 use App\PhieuThu;
 use App\SanPhamDonDatHang;
-use App\ThanhToanBoXung;
+use App\ThanhToanBoSung;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -661,12 +661,16 @@ class DonDatHangController extends Controller
         $page = $request->get('page', 1);
         $query = PhieuThu::query();
         $date = $request->get('date');
+        $hinh_thuc = $request->get('hinh_thuc');
         if (isset($date)) {
             $query->where('created_at', '>=', Carbon::parse($date[0])->timezone('Asia/Ho_Chi_Minh')->startOfDay())
                 ->where('created_at', '<=', Carbon::parse($date[1])->timezone('Asia/Ho_Chi_Minh')->endOfDay());
         }
+        if(isset($hinh_thuc)) {
+            $query->where('hinh_thuc',$hinh_thuc);
+        }
 
-        $donHang = $query->orderBy('updated_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+        $donHang = $query->orderBy('created_at', 'desc')->orderBy('updated_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
         return response()->json([
             'data' => $donHang,
             'message' => 'Lấy dữ liệu thành công',
@@ -776,30 +780,32 @@ class DonDatHangController extends Controller
         ], 200);
     }
 
-    public function thanhToanBoXung(Request $request)
+    public function thanhToanBoSung(Request $request)
     {
         try {
             $donHang = DonDatHang::where('id', $request->id)->first();
             $thanhToan = $request->thanh_toan + $donHang->da_thanh_toan;
             $phaiThanhToan = $donHang->con_phai_thanh_toan - $request->thanh_toan;
             $donHang->update(['da_thanh_toan' => $thanhToan, 'con_phai_thanh_toan' => $phaiThanhToan]);
-            ThanhToanBoXung::create([
+            ThanhToanBoSung::create([
                 'don_hang_id' => $request->id,
                 'so_tien' => $request->thanh_toan,
                 'hinh_thuc' => $request->hinh_thuc
             ]);
+            // tao phieu thanh toan - phieu thu
             PhieuThu::create([
                 'type' => 'hoa_don',
                 'reference_id' => $request->id,
                 'so_tien' => $request->thanh_toan,
-                'noi_dung' => 'Thanh toán bổ xung đơn hàng '.$donHang->ma,
+                'noi_dung' => 'Thanh toán bổ sung đơn hàng '.$donHang->ma,
                 'thong_tin_giao_dich' => null,
                 'thong_tin_khach_hang' => null,
+                'hinh_thuc' => $request->hinh_thuc,
                 'user_id_khach_hang' => $donHang->user_id ? $donHang->user_id : null
             ]);
             return response(['message' => 'Thành công'], 200);
         } catch (\Exception $e) {
-            return response(['message' => 'Không thể thanh toán bổ xung'], 500);
+            return response(['message' => 'Không thể thanh toán bổ sung'], 500);
         }
     }
 }
